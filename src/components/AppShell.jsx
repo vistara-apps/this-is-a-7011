@@ -1,8 +1,13 @@
 import React from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Home, Briefcase, MessageCircle, User, Plus } from 'lucide-react';
+import { Home, Briefcase, MessageCircle, User, LogOut } from 'lucide-react';
+import { Notifications } from './Notifications';
+import { useAuth } from '../contexts/AuthContext';
+import { Avatar, Tabs, Tab } from './ui';
 
 export function AppShell({ children, currentTab, onTabChange, user }) {
+  const { signOut } = useAuth();
+  
   const tabs = [
     { id: 'gigs', label: 'Gigs', icon: Home },
     { id: 'projects', label: 'Projects', icon: Briefcase },
@@ -20,43 +25,52 @@ export function AppShell({ children, currentTab, onTabChange, user }) {
             <p className="text-slate-400 text-sm">Your neighborhood marketplace</p>
           </div>
           <div className="flex items-center gap-3">
-            <ConnectButton />
-            {user?.profile_picture_url && (
-              <img 
-                src={user.profile_picture_url} 
-                alt={user.username}
-                className="w-8 h-8 rounded-full border-2 border-primary-500"
+            <Notifications />
+            <div className="relative group">
+              <Avatar 
+                src={user?.profile_picture_url} 
+                alt={user?.username || 'User'}
+                size="md"
+                className="cursor-pointer"
               />
-            )}
+              
+              {/* Dropdown menu */}
+              <div className="absolute right-0 mt-2 w-48 glass-card rounded-lg shadow-lg z-50 hidden group-hover:block animate-fade-in">
+                <div className="p-3 border-b border-white/10">
+                  <p className="text-white font-medium truncate">{user?.username || 'User'}</p>
+                  <p className="text-slate-400 text-xs truncate">{user?.location || 'No location'}</p>
+                </div>
+                <div className="p-2">
+                  <button
+                    onClick={signOut}
+                    className="w-full flex items-center gap-2 p-2 rounded-lg text-left text-slate-300 hover:bg-white/10 transition-colors"
+                  >
+                    <LogOut size={16} />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <ConnectButton />
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <nav className="glass-card rounded-lg p-1">
-          <div className="flex space-x-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => onTabChange(tab.id)}
-                  className={`flex-1 flex flex-col items-center gap-1 p-3 rounded-md transition-all duration-200 ${
-                    currentTab === tab.id
-                      ? 'bg-primary-500 text-white shadow-lg'
-                      : 'text-slate-400 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <Icon size={18} />
-                  <span className="text-xs font-medium">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </nav>
+        <Tabs value={currentTab} onChange={onTabChange}>
+          {tabs.map((tab) => (
+            <Tab 
+              key={tab.id} 
+              value={tab.id} 
+              label={tab.label} 
+              icon={tab.icon} 
+            />
+          ))}
+        </Tabs>
       </header>
 
       {/* Main Content */}
-      <main className="px-4 pb-6 max-w-sm mx-auto">
+      <main className="px-4 pb-20 max-w-sm mx-auto">
         {children}
       </main>
     </div>
