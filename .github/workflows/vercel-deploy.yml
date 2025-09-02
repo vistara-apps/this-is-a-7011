@@ -27,6 +27,11 @@ jobs:
       run: npm run build
       env:
         NODE_OPTIONS: --max-old-space-size=4096
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'dummy_value_for_ci' }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'dummy_value_for_ci' }}
+        VITE_NEYNAR_API_KEY: ${{ secrets.VITE_NEYNAR_API_KEY || 'dummy_value_for_ci' }}
+        VITE_PAYMENT_API_URL: ${{ secrets.VITE_PAYMENT_API_URL || 'https://payments.vistara.dev' }}
+        VITE_WALLET_CONNECT_PROJECT_ID: ${{ secrets.VITE_WALLET_CONNECT_PROJECT_ID || 'dummy_value_for_ci' }}
 
     - name: Deploy to Vercel (Production)
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
