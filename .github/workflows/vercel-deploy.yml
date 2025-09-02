@@ -27,9 +27,23 @@ jobs:
       run: npm run build
       env:
         NODE_OPTIONS: --max-old-space-size=4096
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'dummy_value_for_ci' }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'dummy_value_for_ci' }}
+        VITE_NEYNAR_API_KEY: ${{ secrets.VITE_NEYNAR_API_KEY || 'dummy_value_for_ci' }}
+        VITE_PAYMENT_API_URL: ${{ secrets.VITE_PAYMENT_API_URL || 'https://payments.vistara.dev' }}
+        VITE_WALLET_CONNECT_PROJECT_ID: ${{ secrets.VITE_WALLET_CONNECT_PROJECT_ID || 'dummy_value_for_ci' }}
+
+    - name: Check Vercel Token
+      id: check_token
+      run: |
+        if [[ -n "${{ secrets.VERCEL_TOKEN }}" ]]; then
+          echo "has_token=true" >> $GITHUB_OUTPUT
+        else
+          echo "has_token=false" >> $GITHUB_OUTPUT
+        fi
 
     - name: Deploy to Vercel (Production)
-      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && steps.check_token.outputs.has_token == 'true'
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
@@ -38,16 +52,20 @@ jobs:
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
 
     - name: Deploy to Vercel (Preview)
-      if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master'
+      if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/master' && steps.check_token.outputs.has_token == 'true'
       uses: amondnet/vercel-action@v25
       with:
         vercel-token: ${{ secrets.VERCEL_TOKEN }}
         vercel-args: '--no-wait'
         vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
         vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        
+    - name: Skip Vercel Deployment
+      if: steps.check_token.outputs.has_token == 'false'
+      run: echo "Skipping Vercel deployment as VERCEL_TOKEN is not set"
 
     - name: Comment PR with deployment URL
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && steps.check_token.outputs.has_token == 'true'
       uses: actions/github-script@v7
       with:
         script: |
